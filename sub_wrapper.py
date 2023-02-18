@@ -11,6 +11,7 @@ wrapped_folder = "wrapped"
 zip_folder_name = "zips"
 uploads_folder = "uploads"
 zipfile_name = "wrapd"
+preview_lenght = 30
 
 
 def wrap_line(text: str, line_wrap_limit: int = 42) -> str:
@@ -96,37 +97,32 @@ def print_content(path, dir: bool = True):
     print(f"-----All contents of path, dir={dir}-----")
     for file_path in glob.glob(path + "/**/*", recursive=True):
         if os.path.isdir(file_path) and dir:
-            print(f"dir:\t{file_path}")
+            print(f"dir:\t{os.path.normpath(file_path)}")
         elif os.path.isfile(file_path):
-            print(f"file:\t{file_path}")
+            print(
+                f"file:\t{os.path.basename(os.path.dirname(file_path))}/{os.path.basename(file_path)} - {os.path.getsize(file_path)}b"
+            )
 
 
-def preview_subs(sub_preview_win, wraplimit_slider, uploaded_file):
+def preview_subs(sub_preview_win, first_file_name, temp_dir):
     """generates content for preview window
 
     Args:
         sub_preview_win (streamlit obj): Streamlit code box
-        wraplimit_slider (int): wrap slider int
-        uploaded_files (files): uploaded files
+        first_file_name (str): uploaded file, the first one
+        temp_dir (path str): temp dir path
     """
-    with tempfile.TemporaryDirectory() as temp_dir:
-        for name in [uploads_folder, wrapped_folder, zip_folder_name]:
-            os.makedirs(os.path.join(temp_dir, name))
-        path = os.path.join(temp_dir, uploads_folder, uploaded_file.name)
-        with open(path, "wb") as f:
-            f.write(uploaded_file.read())
-        wrap_files(temp_dir, wraplimit_slider)
-        previewtext = ""
-        print(f"preview temp file:\t{os.path.join(temp_dir, uploaded_file.name)}")
-        with open(
-            os.path.join(temp_dir, wrapped_folder, uploaded_file.name), "r"
-        ) as read_file:
-            for i, line in enumerate(read_file):
-                if i < 50:
-                    previewtext += line
-                elif i == 50:
-                    previewtext += "..."
-            sub_preview_win.code(previewtext)
+    previewtext = ""
+    print(f"preview temp file:\t{first_file_name}")
+    with open(
+        os.path.join(temp_dir, wrapped_folder, first_file_name), "r"
+    ) as read_file:
+        for i, line in enumerate(read_file):
+            if i < preview_lenght:
+                previewtext += f"{i+1:02}: {line}"
+            elif i == preview_lenght:
+                previewtext += "..."
+        sub_preview_win.code(previewtext)
 
 
 def main():
@@ -148,11 +144,8 @@ def main():
         sub_preview_win = st.code("", language="json")
 
     if uploaded_files:
-        # run_button.button("Run", disabled=False)
         st.session_state.uploaded = True
-        preview_subs(sub_preview_win, wraplimit_slider, uploaded_files[0])
     else:
-        # run_button.button("Run", disabled=True)
         st.session_state.uploaded = False
         sub_preview_win.code("No files uploaded")
     try:
@@ -169,12 +162,18 @@ def main():
 
                 # Do the Thing
                 with st.spinner():
+                    first_file_name = ""
                     for file in uploaded_files:
+                        # save first file name for preview
+                        if first_file_name == "":
+                            first_file_name = file.name
+                        # save files to temp folder
                         path = os.path.join(temp_dir, uploads_folder, file.name)
                         with open(path, "wb") as f:
                             f.write(file.read())
+
                     wrap_files(temp_dir, wraplimit_slider)
-                    # print_content(temp_dir)
+                    preview_subs(sub_preview_win, first_file_name, temp_dir)
                     zip_folder(temp_dir, temp_dir, zip_file_name_time)
 
                 # Print all content of temp:
@@ -182,7 +181,7 @@ def main():
 
                 # if there is a zip, make Download button:
                 if glob.glob(os.path.join(temp_dir, zip_folder_name, "*.zip")):
-                    print("zip file exists check!")
+                    # print("zip file exists check!")
                     # sleep(0.5)
 
                     # Download:
@@ -194,9 +193,9 @@ def main():
                         download_button = st.download_button(
                             "Download File", f, zip_file_name_time
                         )
-                        print(f"zip file: {f.name}")
+                        # print(f"zip file: {f.name}")
     except:
-        st.error("Something went wrong!")
+        st.error("Something went wrong!\nReload page and try again.")
 
 
 if __name__ == "__main__":
