@@ -1,7 +1,12 @@
 <div align="center">
-<img src="assets/logo.png" width="40%">
-</div>
+<img src="assets/logo.png" width="40%"><p></p>
+<div>
 
+<img alt="Python" src="https://img.shields.io/badge/Made%20with-Python-1f425f.svg">
+<img alt="Python" src="https://img.shields.io/badge/uses-Streamlit-blue.svg">
+<img alt="Python" src="https://img.shields.io/badge/supports-.SRT-blue.svg">
+</div>
+</div>
 
 ## Summary
 
@@ -17,9 +22,14 @@ A simple web application to word-wrap .SRT subtitle files.
 
 * Drag and drop SRT files
 * Batch process multiple SRT files at ones
+* Wraps subtitles word-by-word
 * Creates a zip file with timestamp
 * Real-time preview
 * Only takes SRT files
+
+
+## Demo
+<img alt="Demo gif" width="70%" src="https://i.ibb.co/cNpxkLG/subwrap-demo.gif" alt="subwrap-demo">
 
 
 ## Example
